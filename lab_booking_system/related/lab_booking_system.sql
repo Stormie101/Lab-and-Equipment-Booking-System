@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Jun 29, 2025 at 08:51 AM
+-- Generation Time: Sep 09, 2025 at 03:09 AM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -20,6 +20,33 @@ SET time_zone = "+00:00";
 --
 -- Database: `lab_booking_system`
 --
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `equipment_booking`
+--
+
+CREATE TABLE `equipment_booking` (
+  `Booking_ID` int(11) NOT NULL,
+  `User_ID` text NOT NULL,
+  `Equipment_ID` int(11) NOT NULL,
+  `Booking_Date` date NOT NULL,
+  `Booking_Time` time NOT NULL,
+  `Quantity` int(11) NOT NULL,
+  `Status` text NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `equipment_booking`
+--
+
+INSERT INTO `equipment_booking` (`Booking_ID`, `User_ID`, `Equipment_ID`, `Booking_Date`, `Booking_Time`, `Quantity`, `Status`) VALUES
+(1, 'L1', 7, '2025-09-08', '20:58:00', 1, 'pending'),
+(8, 'L1', 2, '2025-09-08', '22:58:00', 2, 'pending'),
+(9, 'L1', 2, '2025-09-08', '22:59:00', 2, 'pending'),
+(10, 'L1', 5, '2025-09-09', '02:10:00', 1, 'pending'),
+(11, 'L1', 6, '2025-09-09', '04:27:00', 1, 'pending');
 
 -- --------------------------------------------------------
 
@@ -80,7 +107,7 @@ CREATE TABLE `lab_booking` (
   `Booking_ID` int(11) NOT NULL,
   `Booking_Date` date DEFAULT NULL,
   `Status` enum('pending','approved','rejected','cancelled','confirmed') NOT NULL DEFAULT 'confirmed',
-  `Student_ID` varchar(20) DEFAULT NULL,
+  `User_ID` varchar(20) DEFAULT NULL,
   `Schedule_ID` int(11) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
@@ -88,12 +115,11 @@ CREATE TABLE `lab_booking` (
 -- Dumping data for table `lab_booking`
 --
 
-INSERT INTO `lab_booking` (`Booking_ID`, `Booking_Date`, `Status`, `Student_ID`, `Schedule_ID`) VALUES
-(1, '2025-06-20', 'confirmed', '2022e180', 1),
-(2, '2025-07-05', 'confirmed', '2022e183', 2),
-(3, '2025-07-06', 'pending', '2022e184', 3),
-(4, '2025-07-07', 'approved', '2022e183', 4),
-(5, '2025-07-08', 'rejected', '2022e184', 4);
+INSERT INTO `lab_booking` (`Booking_ID`, `Booking_Date`, `Status`, `User_ID`, `Schedule_ID`) VALUES
+(19, '2025-09-08', 'pending', NULL, 4),
+(20, '2025-09-10', 'pending', NULL, 1),
+(21, '2025-09-09', 'pending', NULL, 2),
+(23, '2025-09-10', 'pending', 'L1', 5);
 
 -- --------------------------------------------------------
 
@@ -192,7 +218,8 @@ CREATE TABLE `lecture` (
 INSERT INTO `lecture` (`Lecture_ID`, `user_id`, `Name`, `Department`) VALUES
 (1, 'L1', 'Prof. Diana Prince', 'Computer Science'),
 (2, 'L2', 'Prof. Nadeesha Fernando', 'Mechanical Engineering'),
-(3, 'L3', 'Dr. Amara Silva', 'Civil Engineering');
+(3, 'L3', 'Dr. Amara Silva', 'Civil Engineering'),
+(4, 'L4', 'Dr. Jamal', 'IT ');
 
 -- --------------------------------------------------------
 
@@ -243,6 +270,7 @@ INSERT INTO `users` (`user_id`, `username`, `password`, `role`, `status`) VALUES
 ('L1', 'lecture1', 'pass123', 'lecture', 'active'),
 ('L2', 'lecture2', 'pass654', 'lecture', 'active'),
 ('L3', 'lecture3', 'pass987', 'lecture', 'active'),
+('L4', 'lecturer69', 'pass69', 'lecture', 'active'),
 ('ST1', 'student1', 'pass123', 'student', 'active'),
 ('ST2', 'navidu', 'stu123', 'student', 'active'),
 ('ST3', 'student3', 'pass789', 'student', 'active'),
@@ -253,6 +281,12 @@ INSERT INTO `users` (`user_id`, `username`, `password`, `role`, `status`) VALUES
 --
 -- Indexes for dumped tables
 --
+
+--
+-- Indexes for table `equipment_booking`
+--
+ALTER TABLE `equipment_booking`
+  ADD PRIMARY KEY (`Booking_ID`);
 
 --
 -- Indexes for table `instructor`
@@ -273,7 +307,7 @@ ALTER TABLE `lab`
 --
 ALTER TABLE `lab_booking`
   ADD PRIMARY KEY (`Booking_ID`),
-  ADD KEY `Student_ID` (`Student_ID`),
+  ADD KEY `Student_ID` (`User_ID`),
   ADD KEY `Schedule_ID` (`Schedule_ID`);
 
 --
@@ -282,15 +316,6 @@ ALTER TABLE `lab_booking`
 ALTER TABLE `lab_equipment`
   ADD PRIMARY KEY (`Equipment_ID`),
   ADD KEY `Lab_ID` (`Lab_ID`);
-
---
--- Indexes for table `lab_schedule`
---
-ALTER TABLE `lab_schedule`
-  ADD PRIMARY KEY (`Schedule_ID`),
-  ADD KEY `Lab_ID` (`Lab_ID`),
-  ADD KEY `Instructor_ID` (`Instructor_ID`),
-  ADD KEY `Lab_TO_ID` (`Lab_TO_ID`);
 
 --
 -- Indexes for table `lab_to`
@@ -325,6 +350,12 @@ ALTER TABLE `users`
 --
 
 --
+-- AUTO_INCREMENT for table `equipment_booking`
+--
+ALTER TABLE `equipment_booking`
+  MODIFY `Booking_ID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
+
+--
 -- AUTO_INCREMENT for table `instructor`
 --
 ALTER TABLE `instructor`
@@ -334,25 +365,19 @@ ALTER TABLE `instructor`
 -- AUTO_INCREMENT for table `lab`
 --
 ALTER TABLE `lab`
-  MODIFY `Lab_ID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+  MODIFY `Lab_ID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=16;
 
 --
 -- AUTO_INCREMENT for table `lab_booking`
 --
 ALTER TABLE `lab_booking`
-  MODIFY `Booking_ID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+  MODIFY `Booking_ID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=24;
 
 --
 -- AUTO_INCREMENT for table `lab_equipment`
 --
 ALTER TABLE `lab_equipment`
   MODIFY `Equipment_ID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
-
---
--- AUTO_INCREMENT for table `lab_schedule`
---
-ALTER TABLE `lab_schedule`
-  MODIFY `Schedule_ID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
 
 --
 -- AUTO_INCREMENT for table `lab_to`
@@ -364,7 +389,7 @@ ALTER TABLE `lab_to`
 -- AUTO_INCREMENT for table `lecture`
 --
 ALTER TABLE `lecture`
-  MODIFY `Lecture_ID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `Lecture_ID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
 -- Constraints for dumped tables
@@ -386,22 +411,13 @@ ALTER TABLE `lab`
 -- Constraints for table `lab_booking`
 --
 ALTER TABLE `lab_booking`
-  ADD CONSTRAINT `lab_booking_ibfk_1` FOREIGN KEY (`Student_ID`) REFERENCES `student` (`Student_ID`) ON DELETE CASCADE,
-  ADD CONSTRAINT `lab_booking_ibfk_2` FOREIGN KEY (`Schedule_ID`) REFERENCES `lab_schedule` (`Schedule_ID`) ON DELETE CASCADE;
+  ADD CONSTRAINT `fk_labbooking_user` FOREIGN KEY (`User_ID`) REFERENCES `users` (`user_id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 --
 -- Constraints for table `lab_equipment`
 --
 ALTER TABLE `lab_equipment`
   ADD CONSTRAINT `lab_equipment_ibfk_1` FOREIGN KEY (`Lab_ID`) REFERENCES `lab` (`Lab_ID`) ON DELETE CASCADE;
-
---
--- Constraints for table `lab_schedule`
---
-ALTER TABLE `lab_schedule`
-  ADD CONSTRAINT `lab_schedule_ibfk_1` FOREIGN KEY (`Lab_ID`) REFERENCES `lab` (`Lab_ID`) ON DELETE CASCADE,
-  ADD CONSTRAINT `lab_schedule_ibfk_2` FOREIGN KEY (`Instructor_ID`) REFERENCES `instructor` (`Instructor_ID`) ON DELETE SET NULL,
-  ADD CONSTRAINT `lab_schedule_ibfk_3` FOREIGN KEY (`Lab_TO_ID`) REFERENCES `lab_to` (`Lab_TO_ID`) ON DELETE SET NULL;
 
 --
 -- Constraints for table `lab_to`
