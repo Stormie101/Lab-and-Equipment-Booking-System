@@ -51,6 +51,6 @@
 </head>
 <body>
     <div class="top-header">
-        <img src="uptm logo.png" alt="UPTM Logo">
+        <img src="../uptm logo.png" alt="UPTM Logo">
         <h1>Faculty Of Computing & Multimedia</h1>
     </div>

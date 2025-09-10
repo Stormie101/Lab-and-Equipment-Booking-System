@@ -177,38 +177,59 @@ ORDER BY ls.Date, ls.Start_Time
 ";
 $result = $conn->query($sql);
 
-if ($result->num_rows > 0) {
-    echo "<table border='1' cellpadding='5'>";
+// Display all labs from the lab table
+echo "<h3>Lab Directory</h3>";
+$lab_query = $conn->query("SELECT Lab_ID, Name, Type, Capacity, Lab_TO_ID FROM lab");
+
+if ($lab_query->num_rows > 0) {
+    echo "<table>";
     echo "<tr>
-            <th>Lab Name</th>
+            <th>Lab ID</th>
+            <th>Name</th>
             <th>Type</th>
-            <th>Lab Capacity</th>
-            <th>Session Date</th>
-            <th>Time</th>
-            <th>Available Seats</th>
-            <th>Equipment</th>
+            <th>Capacity</th>
+            <th>Lab TO ID</th>
           </tr>";
-    while ($row = $result->fetch_assoc()) {
-        // Fetch equipment for this lab
-        $lab_id = $row['Lab_ID'];
-        $eq_res = $conn->query("SELECT Name, Quantity FROM lab_equipment WHERE Lab_ID=$lab_id");
-        $equipment = [];
-        while ($eq = $eq_res->fetch_assoc()) {
-            $equipment[] = htmlspecialchars($eq['Name']) . " (Qty: {$eq['Quantity']})";
-        }
+    while ($lab = $lab_query->fetch_assoc()) {
         echo "<tr>
-                <td>" . htmlspecialchars($row['LabName']) . "</td>
-                <td>" . htmlspecialchars($row['Type']) . "</td>
-                <td>" . htmlspecialchars($row['LabCapacity']) . "</td>
-                <td>" . htmlspecialchars($row['Date']) . "</td>
-                <td>" . htmlspecialchars($row['Start_Time']) . " - " . htmlspecialchars($row['End_Time']) . "</td>
-                <td>" . htmlspecialchars($row['Remaining_Capacity']) . "</td>
-                <td>" . implode(', ', $equipment) . "</td>
+                <td>" . htmlspecialchars($lab['Lab_ID']) . "</td>
+                <td>" . htmlspecialchars($lab['Name']) . "</td>
+                <td>" . htmlspecialchars($lab['Type']) . "</td>
+                <td>" . htmlspecialchars($lab['Capacity']) . "</td>
+                <td>" . htmlspecialchars($lab['Lab_TO_ID']) . "</td>
               </tr>";
     }
-    echo "</table>";
+    echo "</table><br><br>";
 } else {
-    echo "<p>No available labs at the moment.</p>";
+    echo "<p>No labs found in the system.</p><br>";
+}
+
+$schedule_query = $conn->query("
+SELECT 
+    ls.Schedule_ID, ls.Date, ls.Start_Time, ls.End_Time,
+    l.Name AS LabName, l.Type
+FROM lab_schedule ls
+JOIN lab l ON ls.Lab_ID = l.Lab_ID
+WHERE ls.Status = 'approved'
+AND ls.Remaining_Capacity > 0
+AND ls.Schedule_ID NOT IN (
+    SELECT Schedule_ID FROM lab_booking WHERE User_ID = '$student_id'
+)
+ORDER BY ls.Date, ls.Start_Time
+");
+
+if ($schedule_query->num_rows > 0) {
+    echo "<label for='schedule_id'>Select a Schedule:</label><br><br>";
+    echo "<select name='schedule_id' id='schedule_id' required style='width:100%; padding:10px; border-radius:6px;'>";
+    while ($schedule = $schedule_query->fetch_assoc()) {
+        $label = htmlspecialchars($schedule['LabName']) . " (" . htmlspecialchars($schedule['Type']) . ") on " .
+                 htmlspecialchars($schedule['Date']) . " [" . htmlspecialchars($schedule['Start_Time']) . " - " .
+                 htmlspecialchars($schedule['End_Time']) . "]";
+        echo "<option value='" . $schedule['Schedule_ID'] . "'>$label</option>";
+    }
+    echo "</select><br><br>";
+} else {
+    echo "<p>No available schedules for booking.</p>";
 }
 
 echo "</div>";
