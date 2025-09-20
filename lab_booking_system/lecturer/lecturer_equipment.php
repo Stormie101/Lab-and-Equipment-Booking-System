@@ -221,30 +221,28 @@ echo '<div class="main-content container">';
 
 echo "<p style='font-weight:bold;'>Logged in as User ID: " . $_SESSION['user_id'] . "</p>";
 
-echo "<h2>Equipment Reservation</h2>";
-
-echo "<h3>Lab Equipment</h3>";
+echo "<h3>Available Equipment</h3>";
 $equip = $conn->query("
-    SELECT e.Equipment_ID, l.Name AS LabName, e.Name AS Equipment, e.Quantity
-    FROM lab_equipment e
-    JOIN lab l ON e.Lab_ID = l.Lab_ID
-    ORDER BY l.Lab_ID, e.Name
+    SELECT Equipment_ID, Name, Type, Quantity, Available_Date
+    FROM available_equipment
+    ORDER BY Available_Date ASC
 ");
 
 if ($equip && $equip->num_rows > 0) {
     echo "<table><tr>
-        <th>Lab</th><th>Equipment</th><th>Quantity</th>
+        <th>Name</th><th>Type</th><th>Quantity</th><th>Date</th>
     </tr>";
     while ($row = $equip->fetch_assoc()) {
         echo "<tr>
-            <td>" . htmlspecialchars($row['LabName']) . "</td>
-            <td>" . htmlspecialchars($row['Equipment']) . "</td>
+            <td>" . htmlspecialchars($row['Name']) . "</td>
+            <td>" . htmlspecialchars($row['Type']) . "</td>
             <td>{$row['Quantity']}</td>
+            <td>{$row['Available_Date']}</td>
         </tr>";
     }
     echo "</table>";
 } else {
-    echo "<p>No equipment found.</p>";
+    echo "<p>No equipment available for booking.</p>";
 }
 
 echo '<div class="booking-card">';
@@ -254,10 +252,15 @@ echo '<form action="lecturer_bookE.php" method="POST">
     <select name="equipment_id" id="equipment_id" required>
         <option value="" disabled selected>Select equipment</option>';
         
-    $equipList = $conn->query("SELECT Equipment_ID, Name FROM lab_equipment ORDER BY Name");
+    $equipList = $conn->query("
+        SELECT Equipment_ID, Name, Type, Quantity, Available_Date
+        FROM available_equipment
+        ORDER BY Available_Date ASC
+    ");
     if ($equipList && $equipList->num_rows > 0) {
         while ($eq = $equipList->fetch_assoc()) {
-            echo "<option value='{$eq['Equipment_ID']}'>" . htmlspecialchars($eq['Name']) . "</option>";
+            $label = htmlspecialchars($eq['Name']) . " (" . $eq['Type'] . ", Qty: " . $eq['Quantity'] . ", " . $eq['Available_Date'] . ")";
+            echo "<option value='{$eq['Equipment_ID']}'>$label</option>";
         }
     }
 
@@ -268,16 +271,11 @@ echo '</select>
     <label for="booking_date">Booking Date</label>
     <input type="date" name="booking_date" id="booking_date" required>
 
-    <label for="booking_time">Booking Time</label>
-    <input type="time" name="booking_time" id="booking_time" required>
-
-    <input type="hidden" name="user_id" value="' . $_SESSION['user_id'] . '">
+    <input type="hidden" name="user_id" value="' . htmlspecialchars($_SESSION['user_id']) . '">
 
     <button type="submit">Submit Booking</button>
 </form>';
-
 echo '</div>';
-
 
 echo '</div>';
 echo "</body></html>";

@@ -7,10 +7,6 @@
         color: #333;
     }
 
-    img{
-        max-width: 100%;
-        height: 250px;
-    }
     .container {
         max-width: 1000px;
         margin: 40px auto;
@@ -60,92 +56,47 @@
         display: inline-block;
     }
 
-    .status.pending {
-        background-color: #f39c12;
-        color: white;
-    }
+    .status.pending { background-color: #f39c12; color: white; }
+    .status.approved { background-color: #2ecc71; color: white; }
+    .status.rejected { background-color: #e74c3c; color: white; }
 
-    .status.approved {
-        background-color: #2ecc71;
-        color: white;
-    }
-
-    .status.rejected {
-        background-color: #e74c3c;
-        color: white;
-    }
-
-    @media (max-width: 600px) {
-        .container {
-            padding: 10px;
-        }
-
-        table, th, td {
-            font-size: 13px;
-        }
-    }
-
-    .wrapper {
-    display: flex;
-    min-height: 100vh;
-}
-
-.sidebar {
-    width: 220px;
-    background-color: #2c3e50;
-    color: white;
-    padding: 20px;
-    flex-shrink: 0;
-}
-
-.sidebar h2 {
-    font-size: 20px;
-    margin-bottom: 30px;
-    color: #ecf0f1;
-}
-
-.sidebar a {
-    display: block;
-    color: #ecf0f1;
-    text-decoration: none;
-    margin-bottom: 15px;
-    font-weight: 500;
-    padding: 8px 12px;
-    border-radius: 6px;
-}
-
-.sidebar a:hover {
-    background-color: #34495e;
-}
-
-.main-content {
-    flex-grow: 1;
-    padding: 40px;
-}
-
-@media (max-width: 768px) {
-    .wrapper {
-        flex-direction: column;
-    }
+    .wrapper { display: flex; min-height: 100vh; }
 
     .sidebar {
-        width: 100%;
-        padding: 10px;
-    }
-
-    .main-content {
+        width: 220px;
+        background-color: #2c3e50;
+        color: white;
         padding: 20px;
+        flex-shrink: 0;
     }
-}
-</style>
 
+    .sidebar h2 { font-size: 20px; margin-bottom: 30px; color: #ecf0f1; }
+
+    .sidebar a {
+        display: block;
+        color: #ecf0f1;
+        text-decoration: none;
+        margin-bottom: 15px;
+        font-weight: 500;
+        padding: 8px 12px;
+        border-radius: 6px;
+    }
+
+    .sidebar a:hover { background-color: #34495e; }
+
+    .main-content { flex-grow: 1; padding: 40px; }
+
+    @media (max-width: 768px) {
+        .wrapper { flex-direction: column; }
+        .sidebar { width: 100%; padding: 10px; }
+        .main-content { padding: 20px; }
+    }
+</style>
 
 <?php
 session_start();
-// lecture_dashboard.php
 include '../config.php';
 
-// Only allow lectures
 if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'lecture') {
     header("Location: login.php");
     exit();
@@ -165,82 +116,51 @@ echo '<div class="main-content container">';
 echo '<div class="top-right"><a href="logout.php">Logout</a></div>';
 echo "<h2>Lab Booking</h2>";
 
-/* 1. All Labs */
-echo "<h3>All Labs</h3>";
-$labs = $conn->query("
-    SELECT l.Lab_ID, l.Name, l.Type, l.Capacity, t.Name AS LabTO
-    FROM lab l
-    LEFT JOIN lab_to t ON l.Lab_TO_ID = t.Lab_TO_ID
-    ORDER BY l.Lab_ID
+/* 2. Available Labs to Book */
+echo "<h3>Available Labs</h3>";
+$availableLabs = $conn->query("
+    SELECT Lab_ID, Name, Type, Capacity, Available_Date, Start_Time, End_Time
+    FROM available_lab
+    ORDER BY Available_Date ASC, Start_Time ASC
 ");
 
-if ($labs && $labs->num_rows > 0) {
-    echo "<table border='1' cellpadding='5'><tr>
-        <th>Lab ID</th><th>Name</th><th>Type</th><th>Capacity</th><th>Lab TO</th>
+if ($availableLabs && $availableLabs->num_rows > 0) {
+    echo "<table><tr>
+        <th>Lab ID</th><th>Name</th><th>Type</th><th>Capacity</th>
+        <th>Date</th><th>Time</th>
     </tr>";
-    while ($row = $labs->fetch_assoc()) {
+    while ($row = $availableLabs->fetch_assoc()) {
         echo "<tr>
             <td>{$row['Lab_ID']}</td>
             <td>" . htmlspecialchars($row['Name']) . "</td>
-            <td>" . htmlspecialchars($row['Type']) . "</td>
+            <td>{$row['Type']}</td>
             <td>{$row['Capacity']}</td>
-            <td>" . htmlspecialchars($row['LabTO']) . "</td>
-        </tr>";
-    }
-    echo "</table>";
-} else {
-    echo "<p>No labs found.</p>";
-}
-
-echo "<h3>Your Lab Bookings</h3>";
-
-$userId = $_SESSION['user_id'];
-
-$userBookings = $conn->prepare("
-    SELECT lb.Booking_ID, l.Name AS LabName, ls.Date, ls.Start_Time, ls.End_Time, lb.Status
-    FROM lab_booking lb
-    JOIN lab_schedule ls ON lb.Schedule_ID = ls.Schedule_ID
-    JOIN lab l ON ls.Lab_ID = l.Lab_ID
-    WHERE lb.User_ID = ?
-    ORDER BY lb.Booking_ID DESC
-");
-$userBookings->bind_param("s", $userId);
-$userBookings->execute();
-$result = $userBookings->get_result();
-
-
-if ($result && $result->num_rows > 0) {
-    echo "<table border='1' cellpadding='5'><tr>
-        <th>Booking ID</th><th>Lab</th><th>Date</th><th>Time</th><th>Status</th>
-    </tr>";
-    while ($row = $result->fetch_assoc()) {
-        $statusClass = strtolower($row['Status']);
-        echo "<tr>
-            <td>{$row['Booking_ID']}</td>
-            <td>" . htmlspecialchars($row['LabName']) . "</td>
-            <td>{$row['Date']}</td>
+            <td>{$row['Available_Date']}</td>
             <td>{$row['Start_Time']} - {$row['End_Time']}</td>
-            <td><span class='status {$statusClass}'>" . ucfirst($row['Status']) . "</span></td>
         </tr>";
     }
     echo "</table>";
 } else {
-    echo "<p>You have not made any lab bookings yet.</p>";
+    echo "<p>No available labs at the moment.</p>";
 }
 
+/* 3. Booking Form */
 echo '<div class="container" style="margin-top: 40px; max-width: 700px;">
     <h3 style="color:#2c3e50;">Book a Lab</h3>
     <form action="lecturer_booklab.php" method="POST" style="display: grid; gap: 20px;">';
 
-    // Lab dropdown
-    echo '<label for="schedule_id">Select Lab</label>';
-    echo '<select name="schedule_id" id="schedule_id" required>
+    echo '<label for="lab_id">Select Lab</label>';
+    echo '<select name="lab_id" id="lab_id" required>
             <option value="" disabled selected>Select lab</option>';
 
-    $labs = $conn->query("SELECT Lab_ID, Name, Type, Capacity FROM lab");
+    $labs = $conn->query("
+        SELECT Lab_ID, Name, Type, Capacity, Available_Date, Start_Time, End_Time
+        FROM available_lab
+        ORDER BY Available_Date ASC, Start_Time ASC
+    ");
     if ($labs && $labs->num_rows > 0) {
         while ($lab = $labs->fetch_assoc()) {
-            $label = htmlspecialchars($lab['Name']) . " (" . $lab['Type'] . ", Capacity: " . $lab['Capacity'] . ")";
+            $label = htmlspecialchars($lab['Name']) . " (" . $lab['Type'] . ", " . $lab['Available_Date'] . " " . $lab['Start_Time'] . " - " . $lab['End_Time'] . ")";
             echo "<option value='{$lab['Lab_ID']}'>$label</option>";
         }
     } else {
@@ -248,14 +168,8 @@ echo '<div class="container" style="margin-top: 40px; max-width: 700px;">
     }
     echo '</select>';
 
-    // Booking date
-    echo '<label for="booking_date">Booking Date</label>';
-    echo '<input type="date" name="booking_date" id="booking_date" value="' . date('Y-m-d') . '" required>';
+    echo '<input type="hidden" name="user_id" value="' . htmlspecialchars($_SESSION['user_id']) . '">';
 
-    // User ID (hidden)
-    echo '<input type="hidden" name="user_id" value="' . $_SESSION['user_id'] . '">';
-
-    // Submit button
     echo '<button type="submit" style="
         padding: 14px;
         background-color: #3498db;
@@ -269,7 +183,6 @@ echo '<div class="container" style="margin-top: 40px; max-width: 700px;">
     ">Submit Booking</button>';
 
 echo '</form></div>';
-
 
 echo '</div>';
 echo "</body></html>";

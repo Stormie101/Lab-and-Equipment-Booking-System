@@ -128,7 +128,62 @@
         padding: 20px;
     }
 }
+    .booking-card {
+        background-color: #f9fbfc;
+        padding: 25px;
+        border-radius: 12px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        max-width: 600px;
+        margin-top: 30px;
+        margin-bottom: 40px;
+    }
 
+    .booking-card h3 {
+        margin-bottom: 20px;
+        color: #2c3e50;
+        font-size: 22px;
+    }
+
+    .booking-card label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: 500;
+        color: #34495e;
+    }
+
+    .booking-card select,
+    .booking-card input {
+        width: 100%;
+        padding: 12px;
+        margin-bottom: 18px;
+        border: 1px solid #ccc;
+        border-radius: 8px;
+        font-size: 15px;
+        background-color: #fff;
+    }
+
+    .booking-card input:focus,
+    .booking-card select:focus {
+        border-color: #3498db;
+        outline: none;
+    }
+
+    .booking-card button {
+        width: 100%;
+        padding: 14px;
+        background-color: #3498db;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-size: 16px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: background-color 0.3s ease;
+    }
+
+    .booking-card button:hover {
+        background-color: #2980b9;
+    }
 </style>
 
 
@@ -153,63 +208,61 @@ echo '<div class="sidebar">
 echo '<div class="main-content container">';
 echo '<div class="top-right"><a href="logout.php">Logout</a></div>';
 echo "<h2>Student Dashboard</h2>";
-echo "<h3>Available Labs & Details</h3>";
+echo "<h3>Available Equipment</h3>";
+$equip = $conn->query("
+    SELECT Equipment_ID, Name, Type, Quantity, Available_Date
+    FROM available_equipment
+    ORDER BY Available_Date ASC
+");
 
-// Get Student_ID for this user
-$user_id = $_SESSION['user_id'];
-$res = $conn->query("SELECT Student_ID FROM student WHERE user_id='$user_id'");
-$row = $res->fetch_assoc();
-$student_id = $row['Student_ID'];
-
-// Query: All approved lab schedules not booked by this student
-$sql = "
-SELECT 
-    ls.Schedule_ID, ls.Date, ls.Start_Time, ls.End_Time, ls.Remaining_Capacity,
-    l.Name AS LabName, l.Type, l.Capacity AS LabCapacity, l.Lab_ID
-    FROM lab_schedule ls
-    JOIN lab l ON ls.Lab_ID = l.Lab_ID
-    WHERE ls.Status = 'pending'
-    AND ls.Remaining_Capacity > 0
-    AND ls.Schedule_ID NOT IN (
-      SELECT Schedule_ID FROM lab_booking WHERE User_ID = '$student_id'
-  )
-ORDER BY ls.Date, ls.Start_Time
-";
-$result = $conn->query($sql);
-
-if ($result->num_rows > 0) {
-    echo "<table border='1' cellpadding='5'>";
-    echo "<tr>
-            <th>Lab Name</th>
-            <th>Type</th>
-            <th>Lab Capacity</th>
-            <th>Session Date</th>
-            <th>Time</th>
-            <th>Available Seats</th>
-            <th>Equipment</th>
-          </tr>";
-    while ($row = $result->fetch_assoc()) {
-        // Fetch equipment for this lab
-        $lab_id = $row['Lab_ID'];
-        $eq_res = $conn->query("SELECT Name, Quantity FROM lab_equipment WHERE Lab_ID=$lab_id");
-        $equipment = [];
-        while ($eq = $eq_res->fetch_assoc()) {
-            $equipment[] = htmlspecialchars($eq['Name']) . " (Qty: {$eq['Quantity']})";
-        }
+if ($equip && $equip->num_rows > 0) {
+    echo "<table><tr>
+        <th>Name</th><th>Type</th><th>Quantity</th><th>Date</th>
+    </tr>";
+    while ($row = $equip->fetch_assoc()) {
         echo "<tr>
-                <td>" . htmlspecialchars($row['LabName']) . "</td>
-                <td>" . htmlspecialchars($row['Type']) . "</td>
-                <td>" . htmlspecialchars($row['LabCapacity']) . "</td>
-                <td>" . htmlspecialchars($row['Date']) . "</td>
-                <td>" . htmlspecialchars($row['Start_Time']) . " - " . htmlspecialchars($row['End_Time']) . "</td>
-                <td>" . htmlspecialchars($row['Remaining_Capacity']) . "</td>
-                <td>" . implode(', ', $equipment) . "</td>
-              </tr>";
+            <td>" . htmlspecialchars($row['Name']) . "</td>
+            <td>" . htmlspecialchars($row['Type']) . "</td>
+            <td>{$row['Quantity']}</td>
+            <td>{$row['Available_Date']}</td>
+        </tr>";
     }
     echo "</table>";
 } else {
-    echo "<p>No available labs at the moment.</p>";
+    echo "<p>No equipment available for booking.</p>";
 }
+
+echo '<div class="booking-card">';
+echo '<h3>Book Equipment</h3>';
+echo '<form action="student_bookE.php" method="POST">
+    <label for="equipment_id">Select Equipment</label>
+    <select name="equipment_id" id="equipment_id" required>
+        <option value="" disabled selected>Select equipment</option>';
+        
+    $equipList = $conn->query("
+        SELECT Equipment_ID, Name, Type, Quantity, Available_Date
+        FROM available_equipment
+        ORDER BY Available_Date ASC
+    ");
+    if ($equipList && $equipList->num_rows > 0) {
+        while ($eq = $equipList->fetch_assoc()) {
+            $label = htmlspecialchars($eq['Name']) . " (" . $eq['Type'] . ", Qty: " . $eq['Quantity'] . ", " . $eq['Available_Date'] . ")";
+            echo "<option value='{$eq['Equipment_ID']}'>$label</option>";
+        }
+    }
+
+echo '</select>
+    <label for="quantity">Quantity</label>
+    <input type="number" name="quantity" id="quantity" min="1" required>
+
+    <label for="booking_date">Booking Date</label>
+    <input type="date" name="booking_date" id="booking_date" required>
+
+    <input type="hidden" name="user_id" value="' . htmlspecialchars($_SESSION['user_id']) . '">
+
+    <button type="submit">Submit Booking</button>
+</form>';
+echo '</div>';
 
 echo "</div>";
 echo "</body></html>";

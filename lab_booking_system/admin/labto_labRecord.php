@@ -11,6 +11,7 @@
         max-width: 100%;
         height: 250px;
     }
+
     .container {
         max-width: 1000px;
         margin: 40px auto;
@@ -60,18 +61,8 @@
         display: inline-block;
     }
 
-    .status.pending {
-        background-color: #f39c12;
-        color: white;
-    }
-
     .status.approved {
         background-color: #2ecc71;
-        color: white;
-    }
-
-    .status.rejected {
-        background-color: #e74c3c;
         color: white;
     }
 
@@ -137,55 +128,130 @@
         padding: 20px;
     }
 }
+
+.dashboard-boxes {
+    display: flex;
+    gap: 20px;
+    margin-top: 30px;
+    flex-wrap: wrap;
+}
+
+.box {
+    flex: 1;
+    min-width: 280px;
+    background-color: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    padding: 25px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: center;
+    transition: transform 0.2s ease;
+}
+
+.box:hover {
+    transform: translateY(-4px);
+}
+
+.box h4 {
+    font-size: 18px;
+    color: #2c3e50;
+    margin-bottom: 10px;
+}
+
+.box .count {
+    font-size: 36px;
+    font-weight: bold;
+    color: #3498db;
+}
+
+.box .icon {
+    font-size: 24px;
+    color: #bdc3c7;
+    margin-bottom: 10px;
+}
+.action-btn {
+    display: inline-block;
+    padding: 5px 5px;
+    margin-right: 6px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    text-decoration: none;
+    transition: background-color 0.3s ease;
+}
+
+.action-edit {
+    background-color: #3498db;
+    color: white;
+}
+
+.action-edit:hover {
+    background-color: #2980b9;
+}
+
+.action-delete {
+    background-color: #e74c3c;
+    color: white;
+}
+
+.action-delete:hover {
+    background-color: #c0392b;
+}
+
+.action-approve {
+    background-color: #2ecc71;
+    color: white;
+}
+
+.action-approve:hover {
+    background-color: #27ae60;
+}
+
+.action-reject {
+    background-color: #e74c3c;
+    color: white;
+}
+
+.action-reject:hover {
+    background-color: #c0392b;
+}
+
 </style>
 
 
 <?php
-// lecture_dashboard.php
-session_start();
-
 include '../config.php';
-
-// Only allow lectures
-if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'lecture') {
+session_start();
+// Ensure only admin can access = labto == admin
+if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'labto') {
     header("Location: ../login.php");
     exit();
 }
 
-$userId = $_SESSION['user_id'];
-
-
 include 'header.php';
 echo '<div class="wrapper">';
 echo '<div class="sidebar">
-        <h2>Lecturer Panel</h2>
-        <a href="lecture_dashboard.php">Dashboard</a>
-        <a href="lecturer_lab.php">Lab Reservation</a>
-        <a href="lecturer_equipment.php">Equipment Booking</a>
+        <h2>Admin Panel</h2>
+        <a href="labto_dashboard.php">Dashboard</a>
+        <a href="labto_labRecord.php">Lab Record</a>
+        <a href="labto_equipmentRecord.php">Equipment Record</a>
         <a href="../logout.php">Logout</a>
       </div>';
 echo '<div class="main-content container">';
+echo '<div class="top-right"><a href="logout.php">Logout</a></div>';
+echo "<h2>Lab Record</h2>";
 
-echo '<div class="top-right">';
-echo "<strong>User ID: " . htmlspecialchars($userId) . "</strong> | ";
-
-echo '<a href="../logout.php">Logout</a>';
-echo '</div>';
-
-echo "<h2>Lecture Dashboard</h2>";
-
-/* 6. Available Labs */
+// start here
+/* 1. Available Labs */
 echo "<h3>Available Labs</h3>";
-$availableLabs = $conn->query("
-    SELECT Lab_ID, Name, Type, Capacity, Available_Date, Start_Time, End_Time
-    FROM available_lab
-    ORDER BY Available_Date ASC, Start_Time ASC
-");
+$availableLabs = $conn->query("SELECT * FROM available_lab ORDER BY Available_Date ASC, Start_Time ASC");
 
 if ($availableLabs && $availableLabs->num_rows > 0) {
     echo "<table><tr>
         <th>Lab ID</th><th>Name</th><th>Type</th><th>Capacity</th>
-        <th>Date</th><th>Time</th>
+        <th>Date</th><th>Time</th><th>Actions</th>
     </tr>";
     while ($row = $availableLabs->fetch_assoc()) {
         echo "<tr>
@@ -195,83 +261,63 @@ if ($availableLabs && $availableLabs->num_rows > 0) {
             <td>{$row['Capacity']}</td>
             <td>{$row['Available_Date']}</td>
             <td>{$row['Start_Time']} - {$row['End_Time']}</td>
+<td>
+    <a href='edit_lab.php?id={$row['Lab_ID']}' class='action-btn action-edit'>Edit</a>
+    <a href='delete_lab.php?id={$row['Lab_ID']}' class='action-btn action-delete' onclick=\"return confirm('Delete this lab?')\">Delete</a>
+</td>
+
         </tr>";
     }
     echo "</table>";
 } else {
-    echo "<p>No available labs at the moment.</p>";
+    echo "<p>No available labs found.</p>";
 }
 
-/* 7. Booked Labs */
-echo "<h3>Your Booked Labs</h3>";
-$bookedLabs = $conn->prepare("
-    SELECT Booking_ID, Lab_ID, Name, Type, Capacity, Booking_Date, Start_Time, End_Time, Status
-    FROM booked_lab
-    WHERE User_ID = ?
-    ORDER BY Booking_Date DESC, Start_Time DESC
-");
-$bookedLabs->bind_param("s", $userId);
-$bookedLabs->execute();
-$result = $bookedLabs->get_result();
+echo '<div style="margin: 20px 0;">
+    <a href="add_lab.php" style="
+        display: inline-block;
+        padding: 8px 6px;
+        background-color: #2ecc71;
+        color: white;
+        font-weight: 600;
+        border-radius: 8px;
+        text-decoration: none;
+        transition: background-color 0.3s ease;
+    ">+ Add New Lab</a>
+</div>';
 
-if ($result && $result->num_rows > 0) {
+
+/* 2. Booked Labs */
+echo "<h3>Booked Lab Requests</h3>";
+$bookedLabs = $conn->query("SELECT * FROM booked_lab ORDER BY Booking_Date DESC, Start_Time DESC");
+
+if ($bookedLabs && $bookedLabs->num_rows > 0) {
     echo "<table><tr>
-        <th>Booking ID</th><th>Lab ID</th><th>Name</th><th>Type</th><th>Capacity</th>
-        <th>Date</th><th>Time</th><th>Status</th>
+        <th>Booking ID</th><th>Lab Name</th><th>Type</th><th>User ID</th>
+        <th>Date</th><th>Time</th><th>Status</th><th>Actions</th>
     </tr>";
-    while ($row = $result->fetch_assoc()) {
+    while ($row = $bookedLabs->fetch_assoc()) {
         $statusClass = strtolower($row['Status']);
         echo "<tr>
             <td>{$row['Booking_ID']}</td>
-            <td>{$row['Lab_ID']}</td>
             <td>" . htmlspecialchars($row['Name']) . "</td>
             <td>{$row['Type']}</td>
-            <td>{$row['Capacity']}</td>
+            <td>{$row['User_ID']}</td>
             <td>{$row['Booking_Date']}</td>
             <td>{$row['Start_Time']} - {$row['End_Time']}</td>
             <td><span class='status {$statusClass}'>" . ucfirst($row['Status']) . "</span></td>
+<td>
+    <a href='approve_lab.php?id={$row['Booking_ID']}' class='action-btn action-approve'>Approve</a>
+    <a href='reject_lab.php?id={$row['Booking_ID']}' class='action-btn action-reject'>Reject</a>
+</td>
+
         </tr>";
     }
     echo "</table>";
 } else {
-    echo "<p>You haven’t booked any labs yet.</p>";
+    echo "<p>No lab booking requests found.</p>";
 }
 
-/* 8. Your Booked Equipment */
-echo "<h3>Your Booked Equipment</h3>";
-$bookedEquip = $conn->prepare("
-    SELECT Booking_ID, Equipment_ID, Name, Type, Quantity, Booking_Date, Status
-    FROM booked_equipment
-    WHERE User_ID = ?
-    ORDER BY Booking_Date DESC
-");
-$bookedEquip->bind_param("s", $userId);
-$bookedEquip->execute();
-$result = $bookedEquip->get_result();
-
-if ($result && $result->num_rows > 0) {
-    echo "<table><tr>
-        <th>Booking ID</th><th>Equipment ID</th><th>Name</th><th>Type</th><th>Quantity</th>
-        <th>Date</th><th>Status</th>
-    </tr>";
-    while ($row = $result->fetch_assoc()) {
-        $statusClass = strtolower($row['Status']);
-        echo "<tr>
-            <td>{$row['Booking_ID']}</td>
-            <td>{$row['Equipment_ID']}</td>
-            <td>" . htmlspecialchars($row['Name']) . "</td>
-            <td>{$row['Type']}</td>
-            <td>{$row['Quantity']}</td>
-            <td>{$row['Booking_Date']}</td>
-            <td><span class='status {$statusClass}'>" . ucfirst($row['Status']) . "</span></td>
-        </tr>";
-    }
-    echo "</table>";
-} else {
-    echo "<p>You haven’t booked any equipment yet.</p>";
-}
-
-
-echo '</div>';
+echo "</div>";
 echo "</body></html>";
 ?>

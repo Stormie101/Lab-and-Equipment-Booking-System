@@ -155,82 +155,73 @@ echo '<div class="top-right"><a href="logout.php">Logout</a></div>';
 echo "<h2>Student Dashboard</h2>";
 echo "<h3>Available Labs & Details</h3>";
 
-// Get Student_ID for this user
-$user_id = $_SESSION['user_id'];
-$res = $conn->query("SELECT Student_ID FROM student WHERE user_id='$user_id'");
-$row = $res->fetch_assoc();
-$student_id = $row['Student_ID'];
-
-// Query: All approved lab schedules not booked by this student
-$sql = "
-SELECT 
-    ls.Schedule_ID, ls.Date, ls.Start_Time, ls.End_Time, ls.Remaining_Capacity,
-    l.Name AS LabName, l.Type, l.Capacity AS LabCapacity, l.Lab_ID
-    FROM lab_schedule ls
-    JOIN lab l ON ls.Lab_ID = l.Lab_ID
-    WHERE ls.Status = 'pending'
-    AND ls.Remaining_Capacity > 0
-    AND ls.Schedule_ID NOT IN (
-      SELECT Schedule_ID FROM lab_booking WHERE User_ID = '$student_id'
-  )
-ORDER BY ls.Date, ls.Start_Time
-";
-$result = $conn->query($sql);
-
-// Display all labs from the lab table
-echo "<h3>Lab Directory</h3>";
-$lab_query = $conn->query("SELECT Lab_ID, Name, Type, Capacity, Lab_TO_ID FROM lab");
-
-if ($lab_query->num_rows > 0) {
-    echo "<table>";
-    echo "<tr>
-            <th>Lab ID</th>
-            <th>Name</th>
-            <th>Type</th>
-            <th>Capacity</th>
-            <th>Lab TO ID</th>
-          </tr>";
-    while ($lab = $lab_query->fetch_assoc()) {
-        echo "<tr>
-                <td>" . htmlspecialchars($lab['Lab_ID']) . "</td>
-                <td>" . htmlspecialchars($lab['Name']) . "</td>
-                <td>" . htmlspecialchars($lab['Type']) . "</td>
-                <td>" . htmlspecialchars($lab['Capacity']) . "</td>
-                <td>" . htmlspecialchars($lab['Lab_TO_ID']) . "</td>
-              </tr>";
-    }
-    echo "</table><br><br>";
-} else {
-    echo "<p>No labs found in the system.</p><br>";
-}
-
-$schedule_query = $conn->query("
-SELECT 
-    ls.Schedule_ID, ls.Date, ls.Start_Time, ls.End_Time,
-    l.Name AS LabName, l.Type
-FROM lab_schedule ls
-JOIN lab l ON ls.Lab_ID = l.Lab_ID
-WHERE ls.Status = 'approved'
-AND ls.Remaining_Capacity > 0
-AND ls.Schedule_ID NOT IN (
-    SELECT Schedule_ID FROM lab_booking WHERE User_ID = '$student_id'
-)
-ORDER BY ls.Date, ls.Start_Time
+/* 2. Available Labs to Book */
+echo "<h3>Available Labs</h3>";
+$availableLabs = $conn->query("
+    SELECT Lab_ID, Name, Type, Capacity, Available_Date, Start_Time, End_Time
+    FROM available_lab
+    ORDER BY Available_Date ASC, Start_Time ASC
 ");
 
-if ($schedule_query->num_rows > 0) {
-    echo "<label for='schedule_id'>Select a Schedule:</label><br><br>";
-    echo "<select name='schedule_id' id='schedule_id' required style='width:100%; padding:10px; border-radius:6px;'>";
-    while ($schedule = $schedule_query->fetch_assoc()) {
-        $label = htmlspecialchars($schedule['LabName']) . " (" . htmlspecialchars($schedule['Type']) . ") on " .
-                 htmlspecialchars($schedule['Date']) . " [" . htmlspecialchars($schedule['Start_Time']) . " - " .
-                 htmlspecialchars($schedule['End_Time']) . "]";
-        echo "<option value='" . $schedule['Schedule_ID'] . "'>$label</option>";
+if ($availableLabs && $availableLabs->num_rows > 0) {
+    echo "<table><tr>
+        <th>Lab ID</th><th>Name</th><th>Type</th><th>Capacity</th>
+        <th>Date</th><th>Time</th>
+    </tr>";
+    while ($row = $availableLabs->fetch_assoc()) {
+        echo "<tr>
+            <td>{$row['Lab_ID']}</td>
+            <td>" . htmlspecialchars($row['Name']) . "</td>
+            <td>{$row['Type']}</td>
+            <td>{$row['Capacity']}</td>
+            <td>{$row['Available_Date']}</td>
+            <td>{$row['Start_Time']} - {$row['End_Time']}</td>
+        </tr>";
     }
-    echo "</select><br><br>";
+    echo "</table>";
 } else {
-    echo "<p>No available schedules for booking.</p>";
+    echo "<p>No available labs at the moment.</p>";
 }
+
+/* 3. Booking Form */
+echo '<div class="container" style="margin-top: 40px; max-width: 700px;">
+    <h3 style="color:#2c3e50;">Book a Lab</h3>
+    <form action="student_booklab.php" method="POST" style="display: grid; gap: 20px;">';
+
+    echo '<label for="lab_id">Select Lab</label>';
+    echo '<select name="lab_id" id="lab_id" required>
+            <option value="" disabled selected>Select lab</option>';
+
+    $labs = $conn->query("
+        SELECT Lab_ID, Name, Type, Capacity, Available_Date, Start_Time, End_Time
+        FROM available_lab
+        ORDER BY Available_Date ASC, Start_Time ASC
+    ");
+    if ($labs && $labs->num_rows > 0) {
+        while ($lab = $labs->fetch_assoc()) {
+            $label = htmlspecialchars($lab['Name']) . " (" . $lab['Type'] . ", " . $lab['Available_Date'] . " " . $lab['Start_Time'] . " - " . $lab['End_Time'] . ")";
+            echo "<option value='{$lab['Lab_ID']}'>$label</option>";
+        }
+    } else {
+        echo '<option disabled>No labs available</option>';
+    }
+    echo '</select>';
+
+    echo '<input type="hidden" name="user_id" value="' . htmlspecialchars($_SESSION['user_id']) . '">';
+
+    echo '<button type="submit" style="
+        padding: 14px;
+        background-color: #3498db;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-size: 16px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background-color 0.3s ease;
+    ">Submit Booking</button>';
+
+echo '</form></div>';
 
 echo "</div>";
 echo "</body></html>";

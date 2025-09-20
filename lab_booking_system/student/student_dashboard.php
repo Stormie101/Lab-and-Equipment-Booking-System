@@ -140,6 +140,7 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'student') {
     header("Location: ../login.php");
     exit();
 }
+$userId = $_SESSION['user_id'];
 
 include 'header.php';
 echo '<div class="wrapper">';
@@ -153,62 +154,102 @@ echo '<div class="sidebar">
 echo '<div class="main-content container">';
 echo '<div class="top-right"><a href="logout.php">Logout</a></div>';
 echo "<h2>Student Dashboard</h2>";
-echo "<h3>Available Labs & Details</h3>";
 
-// Get Student_ID for this user
-$user_id = $_SESSION['user_id'];
-$res = $conn->query("SELECT Student_ID FROM student WHERE user_id='$user_id'");
-$row = $res->fetch_assoc();
-$student_id = $row['Student_ID'];
+/* 6. Available Labs */
+echo "<h3>Available Labs</h3>";
+$availableLabs = $conn->query("
+    SELECT Lab_ID, Name, Type, Capacity, Available_Date, Start_Time, End_Time
+    FROM available_lab
+    ORDER BY Available_Date ASC, Start_Time ASC
+");
 
-// Query: All approved lab schedules not booked by this student
-$sql = "
-SELECT 
-    ls.Schedule_ID, ls.Date, ls.Start_Time, ls.End_Time, ls.Remaining_Capacity,
-    l.Name AS LabName, l.Type, l.Capacity AS LabCapacity, l.Lab_ID
-    FROM lab_schedule ls
-    JOIN lab l ON ls.Lab_ID = l.Lab_ID
-    WHERE ls.Status = 'pending'
-    AND ls.Remaining_Capacity > 0
-    AND ls.Schedule_ID NOT IN (
-      SELECT Schedule_ID FROM lab_booking WHERE User_ID = '$student_id'
-  )
-ORDER BY ls.Date, ls.Start_Time
-";
-$result = $conn->query($sql);
-
-if ($result->num_rows > 0) {
-    echo "<table border='1' cellpadding='5'>";
-    echo "<tr>
-            <th>Lab Name</th>
-            <th>Type</th>
-            <th>Lab Capacity</th>
-            <th>Session Date</th>
-            <th>Time</th>
-            <th>Available Seats</th>
-            <th>Equipment</th>
-          </tr>";
-    while ($row = $result->fetch_assoc()) {
-        // Fetch equipment for this lab
-        $lab_id = $row['Lab_ID'];
-        $eq_res = $conn->query("SELECT Name, Quantity FROM lab_equipment WHERE Lab_ID=$lab_id");
-        $equipment = [];
-        while ($eq = $eq_res->fetch_assoc()) {
-            $equipment[] = htmlspecialchars($eq['Name']) . " (Qty: {$eq['Quantity']})";
-        }
+if ($availableLabs && $availableLabs->num_rows > 0) {
+    echo "<table><tr>
+        <th>Lab ID</th><th>Name</th><th>Type</th><th>Capacity</th>
+        <th>Date</th><th>Time</th>
+    </tr>";
+    while ($row = $availableLabs->fetch_assoc()) {
         echo "<tr>
-                <td>" . htmlspecialchars($row['LabName']) . "</td>
-                <td>" . htmlspecialchars($row['Type']) . "</td>
-                <td>" . htmlspecialchars($row['LabCapacity']) . "</td>
-                <td>" . htmlspecialchars($row['Date']) . "</td>
-                <td>" . htmlspecialchars($row['Start_Time']) . " - " . htmlspecialchars($row['End_Time']) . "</td>
-                <td>" . htmlspecialchars($row['Remaining_Capacity']) . "</td>
-                <td>" . implode(', ', $equipment) . "</td>
-              </tr>";
+            <td>{$row['Lab_ID']}</td>
+            <td>" . htmlspecialchars($row['Name']) . "</td>
+            <td>{$row['Type']}</td>
+            <td>{$row['Capacity']}</td>
+            <td>{$row['Available_Date']}</td>
+            <td>{$row['Start_Time']} - {$row['End_Time']}</td>
+        </tr>";
     }
     echo "</table>";
 } else {
     echo "<p>No available labs at the moment.</p>";
+}
+
+/* 7. Booked Labs */
+echo "<h3>Your Booked Labs</h3>";
+$bookedLabs = $conn->prepare("
+    SELECT Booking_ID, Lab_ID, Name, Type, Capacity, Booking_Date, Start_Time, End_Time, Status
+    FROM booked_lab
+    WHERE User_ID = ?
+    ORDER BY Booking_Date DESC, Start_Time DESC
+");
+$bookedLabs->bind_param("s", $userId);
+$bookedLabs->execute();
+$result = $bookedLabs->get_result();
+
+if ($result && $result->num_rows > 0) {
+    echo "<table><tr>
+        <th>Booking ID</th><th>Lab ID</th><th>Name</th><th>Type</th><th>Capacity</th>
+        <th>Date</th><th>Time</th><th>Status</th>
+    </tr>";
+    while ($row = $result->fetch_assoc()) {
+        $statusClass = strtolower($row['Status']);
+        echo "<tr>
+            <td>{$row['Booking_ID']}</td>
+            <td>{$row['Lab_ID']}</td>
+            <td>" . htmlspecialchars($row['Name']) . "</td>
+            <td>{$row['Type']}</td>
+            <td>{$row['Capacity']}</td>
+            <td>{$row['Booking_Date']}</td>
+            <td>{$row['Start_Time']} - {$row['End_Time']}</td>
+            <td><span class='status {$statusClass}'>" . ucfirst($row['Status']) . "</span></td>
+        </tr>";
+    }
+    echo "</table>";
+} else {
+    echo "<p>You haven’t booked any labs yet.</p>";
+}
+
+/* 8. Your Booked Equipment */
+echo "<h3>Your Booked Equipment</h3>";
+$bookedEquip = $conn->prepare("
+    SELECT Booking_ID, Equipment_ID, Name, Type, Quantity, Booking_Date, Status
+    FROM booked_equipment
+    WHERE User_ID = ?
+    ORDER BY Booking_Date DESC
+");
+$bookedEquip->bind_param("s", $userId);
+$bookedEquip->execute();
+$result = $bookedEquip->get_result();
+
+if ($result && $result->num_rows > 0) {
+    echo "<table><tr>
+        <th>Booking ID</th><th>Equipment ID</th><th>Name</th><th>Type</th><th>Quantity</th>
+        <th>Date</th><th>Status</th>
+    </tr>";
+    while ($row = $result->fetch_assoc()) {
+        $statusClass = strtolower($row['Status']);
+        echo "<tr>
+            <td>{$row['Booking_ID']}</td>
+            <td>{$row['Equipment_ID']}</td>
+            <td>" . htmlspecialchars($row['Name']) . "</td>
+            <td>{$row['Type']}</td>
+            <td>{$row['Quantity']}</td>
+            <td>{$row['Booking_Date']}</td>
+            <td><span class='status {$statusClass}'>" . ucfirst($row['Status']) . "</span></td>
+        </tr>";
+    }
+    echo "</table>";
+} else {
+    echo "<p>You haven’t booked any equipment yet.</p>";
 }
 
 echo "</div>";

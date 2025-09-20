@@ -172,6 +172,53 @@
     margin-bottom: 10px;
 }
 
+.action-btn {
+    display: inline-block;
+    padding: 6px 12px;
+    margin-right: 6px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    text-decoration: none;
+    transition: background-color 0.3s ease;
+}
+
+.action-edit {
+    background-color: #3498db;
+    color: white;
+}
+
+.action-edit:hover {
+    background-color: #2980b9;
+}
+
+.action-delete {
+    background-color: #e74c3c;
+    color: white;
+}
+
+.action-delete:hover {
+    background-color: #c0392b;
+}
+
+.action-approve {
+    background-color: #2ecc71;
+    color: white;
+}
+
+.action-approve:hover {
+    background-color: #27ae60;
+}
+
+.action-reject {
+    background-color: #f39c12;
+    color: white;
+}
+
+.action-reject:hover {
+    background-color: #d35400;
+}
+
 </style>
 
 
@@ -195,46 +242,70 @@ echo '<div class="sidebar">
       </div>';
 echo '<div class="main-content container">';
 echo '<div class="top-right"><a href="logout.php">Logout</a></div>';
-echo "<h2>Admin Dashboard</h2>";
+echo "<h2>Equipment Record</h2>";
 
-// Count pending equipment bookings
-$equipCountQuery = $conn->query("SELECT COUNT(*) AS total FROM booked_equipment WHERE Status = 'pending'");
-$equipCount = $equipCountQuery->fetch_assoc()['total'];
+// start here
+/* 1. Available Equipment */
+echo "<h3>Available Equipment</h3>";
+$availableEquip = $conn->query("SELECT * FROM available_equipment ORDER BY Available_Date ASC");
 
-// Count pending lab bookings
-$labCountQuery = $conn->query("SELECT COUNT(*) AS total FROM booked_lab WHERE Status = 'pending'");
-$labCount = $labCountQuery->fetch_assoc()['total'];
+if ($availableEquip && $availableEquip->num_rows > 0) {
+    echo "<table><tr>
+        <th>Equipment ID</th><th>Name</th><th>Type</th><th>Quantity</th><th>Date</th><th>Actions</th>
+    </tr>";
+    while ($row = $availableEquip->fetch_assoc()) {
+        echo "<tr>
+            <td>{$row['Equipment_ID']}</td>
+            <td>" . htmlspecialchars($row['Name']) . "</td>
+            <td>{$row['Type']}</td>
+            <td>{$row['Quantity']}</td>
+            <td>{$row['Available_Date']}</td>
+            <td>
+                <a href='edit_equipment.php?id={$row['Equipment_ID']}' class='action-btn action-edit'>Edit</a>
+                <a href='delete_equipment.php?id={$row['Equipment_ID']}' class='action-btn action-delete' onclick=\"return confirm('Delete this equipment?')\">Delete</a>
+            </td>
+        </tr>";
+    }
+    echo "</table>";
+} else {
+    echo "<p>No equipment available.</p>";
+}
 
-// Count available labs
-$labAvailableQuery = $conn->query("SELECT COUNT(*) AS total FROM available_lab");
-$labAvailable = $labAvailableQuery->fetch_assoc()['total'];
+echo '<div style="margin: 20px 0;">
+    <a href="add_equipment.php" class="action-btn action-approve">+ Add New Equipment</a>
+</div>';
 
-// Count available equipment
-$equipAvailableQuery = $conn->query("SELECT COUNT(*) AS total FROM available_equipment");
-$equipAvailable = $equipAvailableQuery->fetch_assoc()['total'];
+/* 2. Booked Equipment */
+echo "<h3>Booked Equipment Requests</h3>";
+$bookedEquip = $conn->query("SELECT * FROM booked_equipment ORDER BY Booking_Date DESC");
 
-?>
+if ($bookedEquip && $bookedEquip->num_rows > 0) {
+    echo "<table><tr>
+        <th>Booking ID</th><th>Item</th><th>Category</th><th>User ID</th>
+        <th>Quantity</th><th>Date</th><th>Status</th><th>Actions</th>
+    </tr>";
+    while ($row = $bookedEquip->fetch_assoc()) {
+        $statusClass = strtolower($row['Status']);
+        echo "<tr>
+            <td>{$row['Booking_ID']}</td>
+ <td>" . htmlspecialchars($row['Name']) . "</td>
+<td>{$row['Type']}</td>
 
-<div class="dashboard-boxes">
-    <div class="box">
-        <h4>Pending Equipment Requests</h4>
-        <div class="count"><?php echo $equipCount; ?></div>
-    </div>
-    <div class="box">
-        <h4>Pending Lab Bookings</h4>
-        <div class="count"><?php echo $labCount; ?></div>
-    </div>
-</div>
-<div class="dashboard-boxes">
-        <div class="box">
-        <h4>Available Equipment</h4>
-        <div class="count"><?php echo $equipAvailable; ?></div>
-    </div>
-    <div class="box">
-        <h4>Available Labs</h4>
-        <div class="count"><?php echo $labAvailable; ?></div>
-    </div>
-<?php
+            <td>{$row['User_ID']}</td>
+            <td>{$row['Quantity']}</td>
+            <td>{$row['Booking_Date']}</td>
+            <td><span class='status {$statusClass}'>" . ucfirst($row['Status']) . "</span></td>
+            <td>
+                <a href='approve_equipment.php?id={$row['Booking_ID']}' class='action-btn action-approve'>Approve</a>
+                <a href='reject_equipment.php?id={$row['Booking_ID']}' class='action-btn action-reject'>Reject</a>
+            </td>
+        </tr>";
+    }
+    echo "</table>";
+} else {
+    echo "<p>No equipment booking requests found.</p>";
+}
+
 echo "</div>";
 echo "</body></html>";
 ?>

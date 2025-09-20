@@ -3,7 +3,7 @@
 $servername = "localhost";
 $username = "root"; // default XAMPP username
 $password = "";     // default XAMPP password is empty
-$dbname = "lab_booking_system";
+$dbname = "lab_equipment_db"; // updated database name
 
 // Create connection
 $conn = new mysqli($servername, $username, $password, $dbname);

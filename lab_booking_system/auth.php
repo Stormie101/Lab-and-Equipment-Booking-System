@@ -25,9 +25,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $roleMap = [
                 'student'    => 'student/student_dashboard.php',
                 'lecture'    => 'lecturer/lecture_dashboard.php',
-                'instructor' => 'instructor/instructor_dashboard.php',
-                'lab'        => 'labto/labto_dashboard.php',
-                'admin'      => 'admin/admin_dashboard.php'
+                'labto'        => 'admin/labto_dashboard.php', // ni admin
             ];
 
             $role = trim($user['role']);
