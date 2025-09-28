@@ -294,7 +294,7 @@ $bookedLabs = $conn->query("SELECT * FROM booked_lab ORDER BY Booking_Date DESC,
 if ($bookedLabs && $bookedLabs->num_rows > 0) {
     echo "<table><tr>
         <th>Booking ID</th><th>Lab Name</th><th>Type</th><th>User ID</th>
-        <th>Date</th><th>Time</th><th>Status</th><th>Actions</th>
+        <th>Date</th><th>Time</th><th>Status</th><th>Profile</th><th>Actions</th>
     </tr>";
     while ($row = $bookedLabs->fetch_assoc()) {
         $statusClass = strtolower($row['Status']);
@@ -306,12 +306,20 @@ if ($bookedLabs && $bookedLabs->num_rows > 0) {
             <td>{$row['Booking_Date']}</td>
             <td>{$row['Start_Time']} - {$row['End_Time']}</td>
             <td><span class='status {$statusClass}'>" . ucfirst($row['Status']) . "</span></td>
-<td>
-    <a href='approve_lab.php?id={$row['Booking_ID']}' class='action-btn action-approve'>Approve</a>
-    <a href='reject_lab.php?id={$row['Booking_ID']}' class='action-btn action-reject'>Reject</a>
-</td>
+            <td>
+            <a href='view_user.php?id={$row['User_ID']}' class='action-btn action-edit'>View</a>
+            </td>";
 
-        </tr>";
+echo "<td>";
+if ($statusClass === 'pending') {
+    echo "<a href='approve_lab.php?id={$row['Booking_ID']}' class='action-btn action-approve'>Approve</a>
+          <a href='reject_lab.php?id={$row['Booking_ID']}' class='action-btn action-reject'>Reject</a>";
+} else {
+    echo "<span style='color: #888; font-weight: 500;'>No actions available</span>";
+}
+echo "</td>";
+
+      echo"</tr>";
     }
     echo "</table>";
 } else {
