@@ -265,5 +265,34 @@ echo '</select>
 echo '</div>';
 
 echo "</div>";
+echo '<script>';
+echo '
+document.querySelector(".booking-card form").addEventListener("submit", function(e) {
+    e.preventDefault();
+
+    const form = e.target;
+    const formData = new FormData(form);
+
+    fetch("student_bookE.php", {
+        method: "POST",
+        body: formData
+    })
+    .then(res => res.text())
+    .then(response => {
+        if (response.trim() === "success") {
+            alert("✅ Booking successful!");
+            setTimeout(() => {
+                location.reload(); // refresh after 1.5 seconds
+            }, 1500);
+        } else {
+            alert("❌ " + response);
+        }
+    })
+    .catch(() => {
+        alert("❌ Something went wrong. Please try again.");
+    });
+});
+';
+echo '</script>';
 echo "</body></html>";
 ?>

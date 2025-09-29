@@ -76,9 +76,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $update->execute();
         }
 
-        $conn->commit();
-        header("Location: student_bookESuc.php");
-        exit();
+    $conn->commit();
+    echo "success";
+    exit();
+
     } catch (Exception $e) {
         $conn->rollback();
         echo "❌ Booking failed. Please try again.";

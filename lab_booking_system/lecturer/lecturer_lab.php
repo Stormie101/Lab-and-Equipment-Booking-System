@@ -185,5 +185,34 @@ echo '<div class="container" style="margin-top: 40px; max-width: 700px;">
 echo '</form></div>';
 
 echo '</div>';
+echo '<script>';
+echo '
+document.querySelector("form").addEventListener("submit", function(e) {
+    e.preventDefault();
+
+    const form = e.target;
+    const formData = new FormData(form);
+
+    fetch("lecturer_booklab.php", {
+        method: "POST",
+        body: formData
+    })
+    .then(res => res.text())
+    .then(response => {
+        if (response.trim() === "success") {
+            alert("✅ Booking successful!");
+            setTimeout(() => {
+                location.reload(); // refresh after 1.5 seconds
+            }, 1500);
+        } else {
+            alert("❌ " + response);
+        }
+    })
+    .catch(() => {
+        alert("❌ Something went wrong. Please try again.");
+    });
+});
+';
+echo '</script>';
 echo "</body></html>";
 ?>

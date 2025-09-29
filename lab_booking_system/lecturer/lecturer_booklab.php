@@ -49,8 +49,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $delete->execute();
 
             $conn->commit();
-            header("Location: lecturer_bookESuc.php");
+            echo "success";
             exit();
+
 
         } catch (Exception $e) {
             $conn->rollback();

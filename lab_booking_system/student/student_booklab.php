@@ -48,9 +48,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $delete->bind_param("i", $lab_id);
             $delete->execute();
 
-            $conn->commit();
-            header("Location: student_bookESuc.php");
-            exit();
+        $conn->commit();
+        echo "success";
+        exit();
+
 
         } catch (Exception $e) {
             $conn->rollback();
