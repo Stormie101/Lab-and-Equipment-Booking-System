@@ -282,29 +282,38 @@ $bookedEquip = $conn->query("SELECT * FROM booked_equipment ORDER BY Booking_Dat
 if ($bookedEquip && $bookedEquip->num_rows > 0) {
     echo "<table><tr>
         <th>Booking ID</th><th>Item</th><th>Category</th><th>User ID</th>
-        <th>Quantity</th><th>Date</th><th>Status</th><th>Actions</th>
+        <th>Quantity</th><th>Date</th><th>Status</th><th>Profile</th><th>Actions</th>
     </tr>";
-    while ($row = $bookedEquip->fetch_assoc()) {
-        $statusClass = strtolower($row['Status']);
-        echo "<tr>
-            <td>{$row['Booking_ID']}</td>
- <td>" . htmlspecialchars($row['Name']) . "</td>
-<td>{$row['Type']}</td>
-
-            <td>{$row['User_ID']}</td>
-            <td>{$row['Quantity']}</td>
-            <td>{$row['Booking_Date']}</td>
-            <td><span class='status {$statusClass}'>" . ucfirst($row['Status']) . "</span></td>
-            <td>
-                <a href='approve_equipment.php?id={$row['Booking_ID']}' class='action-btn action-approve'>Approve</a>
-                <a href='reject_equipment.php?id={$row['Booking_ID']}' class='action-btn action-reject'>Reject</a>
-            </td>
-        </tr>";
+while ($row = $bookedEquip->fetch_assoc()) {
+    $statusClass = strtolower($row['Status']);
+    echo "<tr>
+        <td>{$row['Booking_ID']}</td>
+        <td>" . htmlspecialchars($row['Name']) . "</td>
+        <td>{$row['Type']}</td>
+        <td>{$row['User_ID']}</td>
+        <td>{$row['Quantity']}</td>
+        <td>{$row['Booking_Date']}</td>
+        <td><span class='status {$statusClass}'>" . ucfirst($row['Status']) . "</span></td>
+        <td>
+            <a href='view_user.php?id={$row['User_ID']}' class='action-btn action-edit'>View</a>
+        </td>
+        <td>";
+    
+    if ($statusClass === 'pending') {
+        echo "<a href='approve_equipment.php?id={$row['Booking_ID']}' class='action-btn action-approve'>Approve</a>
+              <a href='reject_equipment.php?id={$row['Booking_ID']}' class='action-btn action-reject'>Reject</a>";
+    } else {
+        echo "<span style='color: #888; font-weight: 500;'>No actions available</span>";
     }
+
+    echo "</td></tr>";
+}
+
     echo "</table>";
 } else {
     echo "<p>No equipment booking requests found.</p>";
 }
+
 
 echo "</div>";
 echo "</body></html>";
