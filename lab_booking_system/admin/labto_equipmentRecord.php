@@ -1,3 +1,13 @@
+
+<?php
+include '../config.php';
+session_start();
+// Ensure only admin can access = labto == admin
+if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'labto') {
+    header("Location: ../login.php");
+    exit();
+}
+?>
 <style>
     body {
         font-family: 'Segoe UI', sans-serif;
@@ -218,19 +228,37 @@
 .action-reject:hover {
     background-color: #d35400;
 }
-
-</style>
-
-
-<?php
-include '../config.php';
-session_start();
-// Ensure only admin can access = labto == admin
-if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'labto') {
-    header("Location: ../login.php");
-    exit();
+.filter-form {
+    margin: 20px 0;
 }
 
+.filter-form label {
+    font-weight: 600;
+    margin-right: 10px;
+}
+
+.filter-form input[type="date"] {
+    padding: 6px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+.filter-form button {
+    padding: 6px 12px;
+    background-color: #3498db;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.filter-form button:hover {
+    background-color: #2980b9;
+}
+
+</style>
+<?php
 include 'header.php';
 echo '<div class="wrapper">';
 echo '<div class="sidebar">
@@ -247,7 +275,18 @@ echo "<h2>Equipment Record</h2>";
 // start here
 /* 1. Available Equipment */
 echo "<h3>Available Equipment</h3>";
-$availableEquip = $conn->query("SELECT * FROM available_equipment ORDER BY Available_Date ASC");
+$availableDate = $_GET['available_date'] ?? '';
+if ($availableDate) {
+    $availableEquip = $conn->query("SELECT * FROM available_equipment WHERE Available_Date = '$availableDate' ORDER BY Available_Date ASC");
+} else {
+    $availableEquip = $conn->query("SELECT * FROM available_equipment ORDER BY Available_Date ASC");
+}
+
+echo '<form method="GET" class="filter-form">
+    <label for="available_date">Filter by Date:</label>
+    <input type="date" name="available_date" id="available_date" value="' . ($_GET['available_date'] ?? '') . '">
+    <button type="submit">Apply</button>
+</form>';
 
 if ($availableEquip && $availableEquip->num_rows > 0) {
     echo "<table><tr>
@@ -277,7 +316,19 @@ echo '<div style="margin: 20px 0;">
 
 /* 2. Booked Equipment */
 echo "<h3>Booked Equipment Requests</h3>";
-$bookedEquip = $conn->query("SELECT * FROM booked_equipment ORDER BY Booking_Date DESC");
+$bookedDate = $_GET['booked_date'] ?? '';
+if ($bookedDate) {
+    $bookedEquip = $conn->query("SELECT * FROM booked_equipment WHERE Booking_Date = '$bookedDate' ORDER BY Booking_Date DESC");
+} else {
+    $bookedEquip = $conn->query("SELECT * FROM booked_equipment ORDER BY Booking_Date DESC");
+}
+
+echo '<form method="GET" class="filter-form">
+    <label for="booked_date">Filter by Date:</label>
+    <input type="date" name="booked_date" id="booked_date" value="' . ($_GET['booked_date'] ?? '') . '">
+    <button type="submit">Apply</button>
+</form>';
+
 
 if ($bookedEquip && $bookedEquip->num_rows > 0) {
     echo "<table><tr>

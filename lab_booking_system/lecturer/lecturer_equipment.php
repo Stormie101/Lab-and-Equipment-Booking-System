@@ -1,3 +1,9 @@
+<?php
+session_start();
+// lecture_dashboard.php
+include '../config.php';
+?>
+
 <style>
     body {
         font-family: 'Segoe UI', sans-serif;
@@ -194,14 +200,35 @@
     .booking-card button:hover {
         background-color: #2980b9;
     }
+
+    .filter-form label {
+    font-weight: 600;
+    margin-right: 10px;
+}
+
+.filter-form input[type="date"] {
+    padding: 6px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+.filter-form button {
+    padding: 6px 12px;
+    background-color: #3498db;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.filter-form button:hover {
+    background-color: #2980b9;
+}
+
 </style>
 
-
 <?php
-session_start();
-// lecture_dashboard.php
-include '../config.php';
-
 // Only allow lectures
 if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'lecture') {
     header("Location: ../login.php");
@@ -222,11 +249,30 @@ echo '<div class="main-content container">';
 echo "<p style='font-weight:bold;'>Logged in as User ID: " . $_SESSION['user_id'] . "</p>";
 
 echo "<h3>Available Equipment</h3>";
-$equip = $conn->query("
-    SELECT Equipment_ID, Name, Type, Quantity, Available_Date
-    FROM available_equipment
-    ORDER BY Available_Date ASC
-");
+
+echo '<form method="GET" class="filter-form" style="margin-bottom: 20px;">
+    <label for="filter_date">Filter by Date:</label>
+    <input type="date" name="filter_date" id="filter_date" value="' . htmlspecialchars($_GET['filter_date'] ?? '') . '">
+    <button type="submit">Apply</button>
+</form>';
+
+
+$filterDate = $_GET['filter_date'] ?? '';
+if ($filterDate) {
+    $equip = $conn->query("
+        SELECT Equipment_ID, Name, Type, Quantity, Available_Date
+        FROM available_equipment
+        WHERE Available_Date = '$filterDate'
+        ORDER BY Available_Date ASC
+    ");
+} else {
+    $equip = $conn->query("
+        SELECT Equipment_ID, Name, Type, Quantity, Available_Date
+        FROM available_equipment
+        ORDER BY Available_Date ASC
+    ");
+}
+
 
 if ($equip && $equip->num_rows > 0) {
     echo "<table><tr>

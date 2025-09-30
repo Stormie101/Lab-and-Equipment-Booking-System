@@ -1,3 +1,13 @@
+<?php
+session_start();
+include '../config.php';
+
+if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'lecture') {
+    header("Location: login.php");
+    exit();
+}
+?>
+
 <style>
     body {
         font-family: 'Segoe UI', sans-serif;
@@ -91,17 +101,35 @@
         .sidebar { width: 100%; padding: 10px; }
         .main-content { padding: 20px; }
     }
+
+    .filter-form label {
+    font-weight: 600;
+    margin-right: 10px;
+}
+
+.filter-form input[type="date"] {
+    padding: 6px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+.filter-form button {
+    padding: 6px 12px;
+    background-color: #3498db;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.filter-form button:hover {
+    background-color: #2980b9;
+}
+
 </style>
 
 <?php
-session_start();
-include '../config.php';
-
-if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'lecture') {
-    header("Location: login.php");
-    exit();
-}
-
 include 'header.php';
 echo '<div class="wrapper">';
 echo '<div class="sidebar">
@@ -118,11 +146,30 @@ echo "<h2>Lab Booking</h2>";
 
 /* 2. Available Labs to Book */
 echo "<h3>Available Labs</h3>";
-$availableLabs = $conn->query("
-    SELECT Lab_ID, Name, Type, Capacity, Available_Date, Start_Time, End_Time
-    FROM available_lab
-    ORDER BY Available_Date ASC, Start_Time ASC
-");
+
+echo '<form method="GET" class="filter-form" style="margin-bottom: 20px;">
+    <label for="filter_date">Filter by Date:</label>
+    <input type="date" name="filter_date" id="filter_date" value="' . htmlspecialchars($_GET['filter_date'] ?? '') . '">
+    <button type="submit">Apply</button>
+</form>';
+
+
+$filterDate = $_GET['filter_date'] ?? '';
+if ($filterDate) {
+    $availableLabs = $conn->query("
+        SELECT Lab_ID, Name, Type, Capacity, Available_Date, Start_Time, End_Time
+        FROM available_lab
+        WHERE Available_Date = '$filterDate'
+        ORDER BY Available_Date ASC, Start_Time ASC
+    ");
+} else {
+    $availableLabs = $conn->query("
+        SELECT Lab_ID, Name, Type, Capacity, Available_Date, Start_Time, End_Time
+        FROM available_lab
+        ORDER BY Available_Date ASC, Start_Time ASC
+    ");
+}
+
 
 if ($availableLabs && $availableLabs->num_rows > 0) {
     echo "<table><tr>
@@ -187,7 +234,7 @@ echo '</form></div>';
 echo '</div>';
 echo '<script>';
 echo '
-document.querySelector("form").addEventListener("submit", function(e) {
+document.querySelector("form[action=\"lecturer_booklab.php\"]")?.addEventListener("submit", function(e) {
     e.preventDefault();
 
     const form = e.target;

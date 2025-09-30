@@ -1,3 +1,13 @@
+
+<?php
+include '../config.php';
+session_start();
+// Ensure only admin can access = labto == admin
+if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'labto') {
+    header("Location: ../login.php");
+    exit();
+}
+?>
 <style>
     body {
         font-family: 'Segoe UI', sans-serif;
@@ -220,16 +230,7 @@
 
 </style>
 
-
 <?php
-include '../config.php';
-session_start();
-// Ensure only admin can access = labto == admin
-if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'labto') {
-    header("Location: ../login.php");
-    exit();
-}
-
 include 'header.php';
 echo '<div class="wrapper">';
 echo '<div class="sidebar">
@@ -246,7 +247,21 @@ echo "<h2>Lab Record</h2>";
 // start here
 /* 1. Available Labs */
 echo "<h3>Available Labs</h3>";
-$availableLabs = $conn->query("SELECT * FROM available_lab ORDER BY Available_Date ASC, Start_Time ASC");
+$availableDate = $_GET['available_date'] ?? '';
+if ($availableDate) {
+    $availableLabs = $conn->query("SELECT * FROM available_lab WHERE Available_Date = '$availableDate' ORDER BY Available_Date ASC, Start_Time ASC");
+} else {
+    $availableLabs = $conn->query("SELECT * FROM available_lab ORDER BY Available_Date ASC, Start_Time ASC");
+}
+
+
+//filter
+echo '<form method="GET" style="margin-bottom: 20px;">
+    <label for="available_date">Filter by Date:</label>
+    <input type="date" name="available_date" id="available_date" value="' . ($_GET['available_date'] ?? '') . '" style="padding: 6px; margin-left: 10px; margin-right: 10px;">
+    <button type="submit" class="action-btn action-edit">Apply</button>
+</form>';
+
 
 if ($availableLabs && $availableLabs->num_rows > 0) {
     echo "<table><tr>
@@ -289,7 +304,21 @@ echo '<div style="margin: 20px 0;">
 
 /* 2. Booked Labs */
 echo "<h3>Booked Lab Requests</h3>";
-$bookedLabs = $conn->query("SELECT * FROM booked_lab ORDER BY Booking_Date DESC, Start_Time DESC");
+$bookedDate = $_GET['booked_date'] ?? '';
+if ($bookedDate) {
+    $bookedLabs = $conn->query("SELECT * FROM booked_lab WHERE Booking_Date = '$bookedDate' ORDER BY Booking_Date DESC, Start_Time DESC");
+} else {
+    $bookedLabs = $conn->query("SELECT * FROM booked_lab ORDER BY Booking_Date DESC, Start_Time DESC");
+}
+
+
+echo '<form method="GET" style="margin-bottom: 20px;">
+    <label for="booked_date">Filter by Date:</label>
+    <input type="date" name="booked_date" id="booked_date" value="' . ($_GET['booked_date'] ?? '') . '" style="padding: 6px; margin-left: 10px; margin-right: 10px;">
+    <button type="submit" class="action-btn action-edit">Apply</button>
+</form>';
+
+
 
 if ($bookedLabs && $bookedLabs->num_rows > 0) {
     echo "<table><tr>
