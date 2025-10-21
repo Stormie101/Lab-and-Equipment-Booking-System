@@ -164,6 +164,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <a href="labto_dashboard.php">Dashboard</a>
             <a href="labto_labRecord.php">Lab Record</a>
             <a href="labto_equipmentRecord.php">Equipment Record</a>
+            <a href="labto_profile.php">Profile</a>
             <a href="../logout.php">Logout</a>
         </div>
         <div class="main-content">

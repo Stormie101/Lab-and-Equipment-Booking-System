@@ -162,6 +162,7 @@ echo '<div class="sidebar">
         <a href="lecture_dashboard.php">Dashboard</a>
         <a href="lecturer_lab.php">Lab Reservation</a>
         <a href="lecturer_equipment.php">Equipment Booking</a>
+        <a href="lecturer_profile.php">Profile</a>
         <a href="../logout.php">Logout</a>
       </div>';
 echo '<div class="main-content container">';

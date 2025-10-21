@@ -1,13 +1,14 @@
 <?php
 // auth.php
 include 'config.php';
+include 'mfa_config.php'; 
 session_start();
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $username = trim($_POST['username']);
     $password = $_POST['password'];
 
-    $stmt = $conn->prepare("SELECT user_id, username, password, role FROM users WHERE username = ? AND status = 'active'");
+    $stmt = $conn->prepare("SELECT user_id, username, password, role, email FROM users WHERE username = ? AND status = 'active'");
     $stmt->bind_param("s", $username);
     $stmt->execute();
     $result = $stmt->get_result();
@@ -20,22 +21,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $_SESSION['user_id'] = $user['user_id'];
             $_SESSION['username'] = $user['username'];
             $_SESSION['role'] = $user['role'];
+            $_SESSION['email'] = $user['email'];
 
-            // Map roles to correct folder and file
-            $roleMap = [
-                'student'    => 'student/student_dashboard.php',
-                'lecture'    => 'lecturer/lecture_dashboard.php',
-                'labto'        => 'admin/labto_dashboard.php', // ni admin
-            ];
+            // Generate OTP
+            $otp = rand(100000, 999999);
+            $_SESSION['otp'] = $otp;
+            $_SESSION['otp_expiry'] = time() + 300; // 5 minutes
 
-            $role = trim($user['role']);
-
-            if (isset($roleMap[$role]) && file_exists($roleMap[$role])) {
-                header("Location: " . $roleMap[$role]);
+            // Send OTP via email
+            if (sendMFA($user['email'], $otp)) {
+                header("Location: verify.php");
                 exit();
             } else {
-                echo "<h3>❌ Dashboard not found for role: '$role'</h3>";
-                echo "<p>Expected path: " . ($roleMap[$role] ?? 'undefined') . "</p>";
+                echo "<h3>❌ Failed to send MFA code. Try again later.</h3>";
                 exit();
             }
         } else {
@@ -47,4 +45,5 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         exit();
     }
 }
+
 ?>

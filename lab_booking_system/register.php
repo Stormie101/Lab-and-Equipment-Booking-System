@@ -117,8 +117,26 @@ include 'header.php';
         <label>Username:</label>
         <input type="text" name="username" required>
 
+        <label>Email:</label>
+        <input type="email" name="email" required placeholder="e.g. user@gmail.com">
+
+
         <label>Password:</label>
-        <input type="password" name="password" required>
+        <div style="position: relative;">
+        <input type="password" name="password" id="password" required>
+        <button type="button" onclick="togglePassword()" style="
+        position: absolute;
+        right: 10px;
+        top: 50%;
+        transform: translateY(-50%);
+        background: none;
+        border: none;
+        font-size: 14px;
+        color: #007bff;
+        cursor: pointer;
+        ">Show</button>
+        </div>
+
 
         <label>Role:</label>
         <select name="role" id="role" required onchange="toggleRoleFields()">
@@ -170,6 +188,17 @@ function toggleRoleFields() {
     document.getElementById('instructorFields').style.display = (role === 'instructor') ? 'block' : 'none';
     document.getElementById('labtoFields').style.display = (role === 'labto') ? 'block' : 'none';
     document.getElementById('lectureFields').style.display = (role === 'lecture') ? 'block' : 'none';
+}
+function togglePassword() {
+    const input = document.getElementById('password');
+    const button = event.target;
+    if (input.type === 'password') {
+        input.type = 'text';
+        button.textContent = 'Hide';
+    } else {
+        input.type = 'password';
+        button.textContent = 'Show';
+    }
 }
 </script>
 

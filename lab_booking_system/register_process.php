@@ -4,10 +4,10 @@ session_start();
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $username = trim($_POST['username']);
-    $password = $_POST['password']; // stored as plain text
+    $email = trim($_POST['email']);
+    $password = $_POST['password'];
     $role = $_POST['role'];
 
-    // Generate user_id prefix
     $prefix = match($role) {
         'student' => 'ST',
         'lecture' => 'LE',
@@ -16,7 +16,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         default => 'US'
     };
 
-    // Count existing users with this role
     $countQuery = $conn->prepare("SELECT COUNT(*) as total FROM users WHERE role = ?");
     $countQuery->bind_param("s", $role);
     $countQuery->execute();
@@ -34,9 +33,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         exit();
     }
 
-    // Insert user
-    $stmt = $conn->prepare("INSERT INTO users (user_id, username, password, role, status) VALUES (?, ?, ?, ?, 'active')");
-    $stmt->bind_param("ssss", $user_id, $username, $password, $role);
+    // Insert user with email
+    $stmt = $conn->prepare("INSERT INTO users (user_id, username, email, password, role, status) VALUES (?, ?, ?, ?, ?, 'active')");
+    $stmt->bind_param("sssss", $user_id, $username, $email, $password, $role);
 
     if ($stmt->execute()) {
         echo "<script>alert('Registration successful!'); window.location.href='login.php';</script>";
