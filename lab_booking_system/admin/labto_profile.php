@@ -219,8 +219,16 @@ $user = $result->fetch_assoc();
                 <div class="message"><?= $success ?></div>
             <?php elseif (isset($error)): ?>
                 <div class="message error"><?= $error ?></div>
-            <?php endif; ?>
-
+            <?php endif; 
+            
+            $displayRole = match($user['role']) {
+            'labto' => 'Admin',
+            'student' => 'Student',
+            'lecture' => 'Lecturer',
+            default => ucfirst($user['role'])
+            };
+            ?>
+            
             <form method="POST">
                 <table>
                     <tr>
@@ -237,7 +245,7 @@ $user = $result->fetch_assoc();
                     </tr>
                     <tr>
                         <th>Role</th>
-                        <td><?= htmlspecialchars($user['role']) ?></td>
+                        <td><?= htmlspecialchars($displayRole) ?></td>
                     </tr>
                     <tr>
                         <th>Status</th>

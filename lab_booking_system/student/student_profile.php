@@ -14,6 +14,9 @@ include 'header.php';
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $newUsername = trim($_POST['username']);
     $newEmail = trim($_POST['email']);
+    $newname = trim($_POST['student_name']);
+    $newStudentID = trim($_POST['student_id']);   
+    $newSemester = trim($_POST['semester']);   
 
     // Check for duplicate username (excluding current user)
     $check = $conn->prepare("SELECT * FROM users WHERE username = ? AND user_id != ?");
@@ -22,11 +25,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($check->get_result()->num_rows > 0) {
         $error = "Username already taken.";
     } else {
-        $update = $conn->prepare("UPDATE users SET username = ?, email = ? WHERE user_id = ?");
-        $update->bind_param("sss", $newUsername, $newEmail, $_SESSION['user_id']);
+        $update = $conn->prepare("UPDATE users SET username = ?, email = ?, student_name = ?, student_id = ?, semester = ? WHERE user_id = ?");
+        $update->bind_param("ssssss", $newUsername, $newEmail, $newname, $newStudentID, $newSemester, $_SESSION['user_id']);
         if ($update->execute()) {
             $_SESSION['username'] = $newUsername;
             $_SESSION['email'] = $newEmail;
+            $_SESSION['student_name'] = $newname;
+            $_SESSION['student_id'] = $newStudentID;
+            $_SESSION['semester'] = $newSemester;
             $success = "Profile updated successfully.";
         } else {
             $error = "Failed to update profile.";
@@ -229,12 +235,24 @@ $user = $result->fetch_assoc();
                         <td><?= htmlspecialchars($user['user_id']) ?></td>
                     </tr>
                     <tr>
+                        <th>Full Name</th>
+                        <td><input type="text" name="student_name" value="<?= htmlspecialchars($user['student_name']) ?>" ></td>
+                    </tr>
+                    <tr>
                         <th>Username</th>
-                        <td><input type="text" name="username" value="<?= htmlspecialchars($user['username']) ?>" required></td>
+                        <td><input type="text" name="username" value="<?= htmlspecialchars($user['username']) ?>" ></td>
                     </tr>
                     <tr>
                         <th>Email</th>
-                        <td><input type="email" name="email" value="<?= htmlspecialchars($user['email']) ?>" required></td>
+                        <td><input type="email" name="email" value="<?= htmlspecialchars($user['email']) ?>" ></td>
+                    </tr>
+                    <tr>
+                        <th>Student Id</th>
+                        <td><input type="text" name="student_id" value="<?= htmlspecialchars($user['student_id']) ?>" readonly></td>
+                    </tr>
+                    <tr>
+                        <th>Semester</th>
+                        <td><input type="text" name="semester" value="<?= htmlspecialchars($user['semester']) ?>" readonly></td>
                     </tr>
                     <tr>
                         <th>Role</th>

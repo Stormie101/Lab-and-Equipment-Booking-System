@@ -76,7 +76,7 @@ include 'header.php';
     }
 
     button:hover {
-        background-color: #0056b3;
+        color: #004997ff;
     }
 
     p {
@@ -110,6 +110,20 @@ include 'header.php';
         }
     }
 
+    .toggle-btn {
+    position: absolute;
+    right: 10px;
+    top: 35%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    font-size: 14px;
+    color: #007bff;
+    cursor: pointer;
+    padding: 0;
+    width: auto;
+}
+
 </style>
 <div class="container">
     <h2>Register</h2>
@@ -124,17 +138,7 @@ include 'header.php';
         <label>Password:</label>
         <div style="position: relative;">
         <input type="password" name="password" id="password" required>
-        <button type="button" onclick="togglePassword()" style="
-        position: absolute;
-        right: 10px;
-        top: 50%;
-        transform: translateY(-50%);
-        background: none;
-        border: none;
-        font-size: 14px;
-        color: #007bff;
-        cursor: pointer;
-        ">Show</button>
+        <button type="button" onclick="togglePassword()" class="toggle-btn">Show</button>
         </div>
 
 
