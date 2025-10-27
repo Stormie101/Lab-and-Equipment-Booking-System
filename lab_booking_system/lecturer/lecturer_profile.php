@@ -13,6 +13,7 @@ include 'header.php';
 // Handle update request
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $newUsername = trim($_POST['username']);
+    $newLectureName = trim($_POST['lecture_name']);
     $newEmail = trim($_POST['email']);
     $newDepartment = trim($_POST['department']);
 
@@ -23,12 +24,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($check->get_result()->num_rows > 0) {
         $error = "Username already taken.";
     } else {
-        $update = $conn->prepare("UPDATE users SET username = ?, email = ?, department = ? WHERE user_id = ?");
-        $update->bind_param("ssss", $newUsername, $newEmail, $newDepartment, $_SESSION['user_id']);
+        $update = $conn->prepare("UPDATE users SET username = ?, email = ?, department = ?, lecture_name = ? WHERE user_id = ?");
+        $update->bind_param("sssss", $newUsername, $newEmail, $newDepartment, $newLectureName, $_SESSION['user_id']);
         if ($update->execute()) {
             $_SESSION['username'] = $newUsername;
             $_SESSION['email'] = $newEmail;
             $_SESSION['department'] = $newDepartment;
+            $_SESSION['lecture_name'] = $newLectureName;
             $success = "Profile updated successfully.";
         } else {
             $error = "Failed to update profile.";
@@ -231,6 +233,10 @@ $user = $result->fetch_assoc();
                         <td><?= htmlspecialchars($user['user_id']) ?></td>
                     </tr>
                     <tr>
+                        <th>Full Name</th>
+                        <td><input type="text" name="lecture_name" value="<?= htmlspecialchars($user['lecture_name']) ?>" ></td>
+                    </tr>
+                    <tr>
                         <th>Username</th>
                         <td><input type="text" name="username" value="<?= htmlspecialchars($user['username']) ?>" ></td>
                     </tr>
@@ -244,7 +250,7 @@ $user = $result->fetch_assoc();
                     </tr>
                     <tr>
                         <th>Department</th>
-                        <td><?= htmlspecialchars($user['department']) ?></td>
+                        <td><input type="text" name="department" value="<?= htmlspecialchars($user['department']) ?>" ></td>
                     </tr>
                     <tr>
                         <th>Status</th>

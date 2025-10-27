@@ -14,6 +14,9 @@ include 'header.php';
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $newUsername = trim($_POST['username']);
     $newEmail = trim($_POST['email']);
+    $newPhoneNumber = trim($_POST['phone_number']);
+    $newAdminName = trim($_POST['admin_name']);
+
 
     // Check for duplicate username (excluding current user)
     $check = $conn->prepare("SELECT * FROM users WHERE username = ? AND user_id != ?");
@@ -22,11 +25,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($check->get_result()->num_rows > 0) {
         $error = "Username already taken.";
     } else {
-        $update = $conn->prepare("UPDATE users SET username = ?, email = ? WHERE user_id = ?");
-        $update->bind_param("sss", $newUsername, $newEmail, $_SESSION['user_id']);
+        $update = $conn->prepare("UPDATE users SET username = ?, email = ?, phone_number = ?, admin_name = ? WHERE user_id = ?");
+        $update->bind_param("sssss", $newUsername, $newEmail, $newPhoneNumber, $newAdminName, $_SESSION['user_id']);
         if ($update->execute()) {
             $_SESSION['username'] = $newUsername;
+            $_SESSION['admin_name'] = $newAdminName;
             $_SESSION['email'] = $newEmail;
+            $_SESSION['phone_number'] = $newPhoneNumber;
             $success = "Profile updated successfully.";
         } else {
             $error = "Failed to update profile.";
@@ -236,8 +241,16 @@ $user = $result->fetch_assoc();
                         <td><?= htmlspecialchars($user['user_id']) ?></td>
                     </tr>
                     <tr>
+                        <th>Full Name</th>
+                        <td><input type="text" name="admin_name" value="<?= htmlspecialchars($user['admin_name']) ?>" required></td>
+                    </tr>
+                    <tr>
                         <th>Username</th>
-                        <td><input type="text" name="username" value="<?= htmlspecialchars($user['username']) ?>" required></td>
+                        <td><input type="text" name="username" value="<?= htmlspecialchars($user['username']) ?>" readonly></td>
+                    </tr>
+                    <tr>
+                        <th>Phone Number</th>
+                        <td><input type="text" name="phone_number" value="<?= htmlspecialchars($user['phone_number']) ?>" required></td>
                     </tr>
                     <tr>
                         <th>Email</th>

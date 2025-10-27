@@ -192,7 +192,9 @@ th {
         <?php if ($user): ?>
 <table>
     <tr><th>User ID</th><td><?php echo $user['user_id']; ?></td></tr>
+    <tr><th>Full Name</th><td><?php echo htmlspecialchars($user['student_name']); ?></td></tr>
     <tr><th>Username</th><td><?php echo htmlspecialchars($user['username']); ?></td></tr>
+    <tr><th>Phone Number</th><td><?php echo htmlspecialchars($user['phone_number']); ?></td></tr>
     <tr><th>Role</th><td><?php echo htmlspecialchars($user['role']); ?></td></tr>
     <tr><th>Status</th><td><?php echo htmlspecialchars($user['status']); ?></td></tr>
 </table>

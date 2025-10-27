@@ -25,14 +25,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($check->get_result()->num_rows > 0) {
         $error = "Username already taken.";
     } else {
-        $update = $conn->prepare("UPDATE users SET username = ?, email = ?, student_name = ?, student_id = ?, semester = ? WHERE user_id = ?");
-        $update->bind_param("ssssss", $newUsername, $newEmail, $newname, $newStudentID, $newSemester, $_SESSION['user_id']);
+        $update = $conn->prepare("UPDATE users SET username = ?, email = ?, student_name = ?, student_id = ?, semester = ?, phone_number = ? WHERE user_id = ?");
+        $update->bind_param("sssssss", $newUsername, $newEmail, $newname, $newStudentID, $newSemester, $newPhoneNumber, $_SESSION['user_id']);
         if ($update->execute()) {
             $_SESSION['username'] = $newUsername;
             $_SESSION['email'] = $newEmail;
             $_SESSION['student_name'] = $newname;
             $_SESSION['student_id'] = $newStudentID;
             $_SESSION['semester'] = $newSemester;
+            $_SESSION['phone_number'] = $newPhoneNumber;
             $success = "Profile updated successfully.";
         } else {
             $error = "Failed to update profile.";
@@ -241,6 +242,10 @@ $user = $result->fetch_assoc();
                     <tr>
                         <th>Username</th>
                         <td><input type="text" name="username" value="<?= htmlspecialchars($user['username']) ?>" ></td>
+                    </tr>
+                    <tr>
+                        <th>Phone Number</th>
+                        <td><input type="text" name="phone_number" value="<?= htmlspecialchars($user['phone_number']) ?>" ></td>
                     </tr>
                     <tr>
                         <th>Email</th>
